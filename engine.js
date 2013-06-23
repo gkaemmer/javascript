@@ -37,6 +37,7 @@ Engine.prototype.maximize = function() {
 
 
 
+
 // HELPER FUNCTIONS:
 
 /*
@@ -48,4 +49,8 @@ function each(ary,func) {
 		func(ary[i],i);
 		i++;
 	}
+}
+
+function rgb(r,g,b) {
+	return 'rgb('+r+','+g+','+b+')';
 }
