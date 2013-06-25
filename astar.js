@@ -118,7 +118,8 @@ function Pathfinder() {
 			currentNode.open = false;
 			each([[-1,-1,true],[0,-1,false],[1,-1,true],[1,0,false],[1,1,true],[0,1,false],[-1,1,true],[-1,0,false]],
 				 function(pos,i) {
-				 	var checkNode = currentNode.mv(pos[0],pos[1])
+				 	var checkNode = currentNode.mv(pos[0],pos[1]);
+				 	if (pos[2] && (currentNode.mv(pos[0],0).mode == WALL || currentNode.mv(0,pos[1]).mode == WALL)) return;
 				 	if (checkNode.mode != WALL && !checkNode.closed) {
 				 		moveCost = pos[2] ? diagCost : adjCost;
 				 		if (!checkNode.open) {
