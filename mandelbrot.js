@@ -11,9 +11,11 @@ var centerY = 0;
 var zoom = 1;
 
 var scale = zoom*gridWidth/4;
-var xOffset = gridWidth/2 - (gridWidth * zoom * centerX / 4);
-var yOffset = gridHeight/2 - (gridHeight * zoom * centerY / 4);
+var xOffset = gridWidth/2 - (gridWidth * zoom * centerX / 2 * (gridHeight/gridWidth));
+var yOffset = gridHeight/2 - (gridHeight * zoom * centerY / 4 * (gridWidth/gridHeight));
 var globalIterations = 0;
+
+var cancelled = false;
 
 var pts = [];
 
@@ -46,8 +48,9 @@ function iteratePoint(point) {
 }
 
 function drawPoint(ctx,point) {
-  color = 255 - Math.floor(255.0 * point.iterations / globalIterations);
-  ctx.fillStyle = rgb(color,color,color);
+  var color = 0; //255 - Math.floor(255.0 * point.iterations / globalIterations);
+  if (point.escaped) color = Math.floor(765.0 * point.iterations / globalIterations);
+  ctx.fillStyle = rgb(Math.min(255, color),Math.min(Math.max(color-255,0),255),Math.max(color-510,0));
   ctx.fillRect(xToGlobal(point.cx)*pointWidth,yToGlobal(point.cy)*pointHeight,pointWidth,pointHeight);
 }
 
@@ -60,8 +63,9 @@ function initPoints() {
 }
 
 function makePass() {
-  var i = pts.length;
+  $('#make_pass').attr('disabled',true);
   globalIterations++;
+  var i = pts.length;
   while (i--) {
     if (pts[i].escaped) continue;
     iteratePoint(pts[i]);
@@ -70,9 +74,19 @@ function makePass() {
   while (i--) {
     drawPoint(engine.ctx,pts[i]);
   }
+  $('#make_pass').removeAttr('disabled');
+  if (!cancelled) setTimeout(makePass,200);
 }
 
 $(document).ready(function() {
   initPoints();
-  $("<button>Make Pass</button>").click(makePass).insertAfter($(engine.canvas));
+  $('#start').click(function() { cancelled = false; makePass(); });
+  $('#cancel').click(function() { cancelled = true });
+  $(engine.canvas).mousemove(function(e) {
+    var pos = $(this).offset();
+    var x = e.pageX - pos.left;
+    var y = e.pageY - pos.top;
+    $('#coord_x').text((x/pointWidth - xOffset) / scale);
+    $('#coord_y').text((y/pointHeight - yOffset) / scale);
+  })
 });
