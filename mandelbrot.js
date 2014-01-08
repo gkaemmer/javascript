@@ -124,8 +124,17 @@ function drawZoom(newX, newY, zoomAmt) {
 
 $(document).ready(function() {
   resetVars();
-  $('#start').click(function() { cancelled = false; makePass(); });
-  $('#cancel').click(function() { cancelled = true; });
+  $('#start').click(function() {
+    cancelled = false; 
+    makePass();
+    $('#start').hide();
+    $('#cancel').show();
+  });
+  $('#cancel').click(function() {
+    cancelled = true;
+    $('#start').show();
+    $('#cancel').hide();
+  }).hide();
   $(engine.canvas).mousemove(function(e) {
     var pos = $(this).offset();
     var x = e.pageX - pos.left;
