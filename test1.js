@@ -30,13 +30,13 @@ function drawPixel(x,y,ctx) {
 var fieldStr = 0.01;
 
 function field(x,y,z) {
-	var resX = Math.random()-0.5;
-	var resY = 0;
+	var resX = 0.5;
+	var resY = 0.1 * Math.exp(2*x) * Math.exp(-(y*y)/4);
 	var resZ = -z;
-	return [resX*fieldStr,resY*fieldStr,resZ*fieldStr];
+	return [resX*fieldStr,resY*fieldStr,0];
 }
 
-var life = 10;
+var life = 100;
 var maxSpeed = 0;
 
 function particle(x,y,z) {
@@ -46,10 +46,10 @@ function particle(x,y,z) {
 	this.fv = 0;
 	this.x = x;
 	this.y = y;
-	this.z = z;
+	this.z = 0;//z;
 	this.lastX = this.sx = this.getSX();
 	this.lastY = this.sy = this.getSY();
-	this.speed = 1+Math.random();
+	this.speed = 1;//1+Math.random();
 	this.life = Math.random()*life;
 }
 
@@ -58,7 +58,7 @@ particle.prototype.getSX = function() {
 }
 
 particle.prototype.getSY = function() {
-	return this.y / (1+this.z*0.2) / scale * H + H/2;
+	return H - (this.y / (1+this.z*0.2) / scale * H + H/2);
 }
 particle.prototype.reset = function(x,y,z) {
 	this.vx = 0;
@@ -66,13 +66,13 @@ particle.prototype.reset = function(x,y,z) {
 	this.vz = 0;
 	this.x = x;
 	this.y = y;
-	this.z = z;
+	this.z = 0//z;
 	this.lastX = this.sx = this.getSX();
 	this.lastY = this.sy = this.getSY();
 	this.life = Math.random()*life;
 }
 particle.prototype.draw = function(ctx) {
-	ctx.strokeStyle = rgba(0,0,0,this.fv/maxSpeed);
+	ctx.strokeStyle = rgba(Math.max(this.z * 255, 0),0,0,0.2 + this.fv/maxSpeed * 0.8);
 	ctx.beginPath();
 	ctx.moveTo(this.lastX,this.lastY);
 	ctx.lineTo(this.sx,this.sy);

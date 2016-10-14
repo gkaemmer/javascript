@@ -1,0 +1,13 @@
+.sans {
+  color: #f00;
+}
+
+.body {
+  .sans {
+    color: #0f0;
+  }
+}
+
+h1 {
+  @extend .sans;
+}
