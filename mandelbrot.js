@@ -1,13 +1,18 @@
 var engine = new Engine("canvas");
-var gridWidth = 400;
-var gridHeight = 200;
+var gridWidth = 800;
+var gridHeight = 400;
 var pointWidth = engine.W / gridWidth;
 var pointHeight = engine.H / gridHeight;
+
+var fps = 100; // 50fps
 
 var initialized = false;
 var zoomSpeed = 2;
 var zoomAmt = 1;
 var topLeft = {x: 0, y: 0};
+
+// For optimizing pixel draws
+var imageData;
 
 // to move/zoom around the mandelbrot, use these three vars
 // note: a mandelbrot point can only exist on the intervals -2 < x,y < 2
@@ -30,7 +35,8 @@ var cancelled = false;
 
 var pts = [];
 
-var Point = function(x,y) {
+var Point = function(index, x,y) {
+  this.index = index;
   this.zx = 0;
   this.zy = 0;
   this.cx = x;
@@ -56,21 +62,32 @@ function iteratePoint(point) {
   if (point.zx * point.zx + point.zy * point.zy > 4) {
     point.escaped = true;
   }
+  if (point.escaped)
+    return true;
+  else
+    return false;
 }
 
 function drawPoint(ctx,point) {
   var color = 0; //255 - Math.floor(255.0 * point.iterations / globalIterations);
-  if (point.escaped) color = Math.floor(765.0 * point.iterations / globalIterations);
-  ctx.fillStyle = rgb(Math.min(255, color),Math.min(Math.max(color-255,0),255),Math.max(color-510,0));
-  ctx.fillRect(xToGlobal(point.cx)*pointWidth,yToGlobal(point.cy)*pointHeight,pointWidth,pointHeight);
+  if (point.escaped)
+    color = Math.floor(765.0 * point.iterations / globalIterations);
+  var x = Math.floor(xToGlobal(point.cx)*pointWidth);
+  var y = Math.floor(yToGlobal(point.cy)*pointHeight);
+  var index = point.index * 4;
+  imageData.data[index + 0] = Math.min(255, color)
+  imageData.data[index + 1] = Math.min(Math.max(color-255,0),255)
+  imageData.data[index + 2] = Math.max(color-510,0);
+  imageData.data[index + 3] = 255;
 }
 
 function initPoints() {
   pts = [];
+  var index = 0;
   for (var i = 0; i < gridHeight; i++) {
     pts[i] = [];
     for (var j = 0; j < gridWidth; j++) {
-      pts[i].push(new Point((j-xOffset)/scale,(i-yOffset)/scale));
+      pts[i].push(new Point(index++, (j-xOffset)/scale,(i-yOffset)/scale));
     }
   }
   globalIterations = 0;
@@ -82,21 +99,31 @@ function initPoints() {
 function makePass() {
   if (!initialized) initPoints();
   $('#start').attr('disabled',true);
-  globalIterations++;
-  for (var i = 0; i < gridHeight; i++) {
-    for (var j = 0; j < gridWidth; j++) {
-      if (pts[i][j].escaped) continue;
-      iteratePoint(pts[i][j]);
+  var escapedCount = 0;
+  var prePasses = 0;
+  while (escapedCount <= 0 && prePasses < 100) {
+    globalIterations++;
+    for (var i = 0; i < gridHeight; i++) {
+      for (var j = 0; j < gridWidth; j++) {
+        if (pts[i][j].escaped) {
+          escapedCount++;
+          continue;
+        }
+        iteratePoint(pts[i][j]);
+      }
     }
+    prePasses++;
   }
+  $('#iterations').text(globalIterations);
   i = pts.length;
   for (var i = 0; i < gridHeight; i++) {
     for (var j = 0; j < gridWidth; j++) {
       drawPoint(engine.ctx,pts[i][j]);
     }
   }
+  engine.ctx.putImageData(imageData, 0, 0);
   $('#start').removeAttr('disabled');
-  if (!cancelled) setTimeout(makePass,200);
+  if (!cancelled) setTimeout(makePass,1000/fps);
 }
 
 function drawZoom(newX, newY, zoomAmt) {
@@ -125,7 +152,7 @@ function drawZoom(newX, newY, zoomAmt) {
 $(document).ready(function() {
   resetVars();
   $('#start').click(function() {
-    cancelled = false; 
+    cancelled = false;
     makePass();
     $('#start').hide();
     $('#cancel').show();
@@ -135,6 +162,10 @@ $(document).ready(function() {
     $('#start').show();
     $('#cancel').hide();
   }).hide();
+
+  // For optimizing pixel draws
+  imageData = engine.ctx.getImageData(0, 0, engine.W, engine.H);
+
   $(engine.canvas).mousemove(function(e) {
     var pos = $(this).offset();
     var x = e.pageX - pos.left;
@@ -142,15 +173,15 @@ $(document).ready(function() {
     $('#coord_x').text((x/pointWidth - xOffset) / scale);
     $('#coord_y').text((y/pointHeight - yOffset) / scale);
   }).click(function(e) {
+    var multiple = engine.W / $(this).innerWidth();
     var pos = $(this).offset();
-    var screenX = e.pageX - pos.left;
-    var screenY = e.pageY - pos.top;
+    var screenX = multiple * (e.pageX - pos.left);
+    var screenY = multiple * (e.pageY - pos.top);
     var x = Math.floor(topLeft.x + screenX/zoomAmt);
     var y = Math.floor(topLeft.y + screenY/zoomAmt);
     zoomAmt *= zoomSpeed;
     topLeft.x = x - (gridWidth/(2*zoomAmt));
     topLeft.y = y - (gridHeight/(2*zoomAmt));
-    console.log(topLeft.x,topLeft.y);
     drawZoom(x,y,zoomAmt);
     centerX = (screenX/pointWidth - xOffset) / scale;
     centerY = (screenY/pointHeight - yOffset) / scale;

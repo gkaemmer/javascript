@@ -4,18 +4,24 @@
   <title>Canvas</title>
   <style type="text/css">
 body {
-/*  margin:0;
-  padding:0;*/
+  text-align: center;
 }
-  </style>
+
+canvas#canvas {
+  margin: 10px;
+}
+
+</style>
 </head>
 <body>
-<canvas id="canvas" width="400" height="200"></canvas>
+<canvas id="canvas" style="width: 400px; height: 200px;" width="800" height="400"></canvas><br />
 <button id="start">Start</button>
-<button id="cancel">Stop</button>
+<button id="cancel">Stop</button><br />
 <span class="coords">Coordinates: (<span id="coord_x"></span>, <span id="coord_y"></span>)</span>
 <br />
-Click the button to toggle rendering. When not rendering, zoom by clicking the canvas. Then press start to render zoomed image.
+Click the button to toggle rendering. When not rendering, zoom by clicking the canvas. Then press start to render zoomed image.<br />
+<br />
+Iterations: <span id="iterations"></span>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="engine.js" type="text/javascript" charset="utf-8"></script>
 <script src="mandelbrot.js" type="text/javascript" charset="utf-8"></script>
